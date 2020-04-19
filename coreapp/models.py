@@ -5,7 +5,7 @@ class Recipient(models.Model):
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
     email_address = models.EmailField(max_length=50)
-    parent_email = models.ForeignKey('Email', on_delete=models.CASCADE)
+    parent_email = models.ForeignKey('Email', on_delete=models.CASCADE, related_name='recipients')
 
 
 class Email(models.Model):

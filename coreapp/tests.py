@@ -2,6 +2,13 @@ from django.test import TestCase
 
 from coreapp import models
 
+TEST_EMAIL_DATA = {
+    'sender': 'test@test.com',
+    'subject': 'test subject',
+    'body': 'test body',
+    'status': 'pending',
+}
+
 
 def create_test_recipient(parent_email, email_address='test@test.com'):
     return models.Recipient.objects.create(
@@ -12,14 +19,18 @@ def create_test_recipient(parent_email, email_address='test@test.com'):
     )
 
 
+def create_test_email():
+    return models.Email.objects.create(
+        sender='test@test.com',
+        subject='test subject',
+        body='test body',
+        status='pending'
+    )
+
+
 class BasicModelsTestCase(TestCase):
     def setUp(self):
-        self.test_email_data = {
-            'sender': 'test@test.com',
-            'subject': 'test subject',
-            'body': 'test body',
-            'status': 'pending',
-        }
+        self.test_email_data = TEST_EMAIL_DATA
 
     def test_email_model_can_be_created(self):
         email = models.Email.objects.create(**self.test_email_data)
@@ -30,7 +41,7 @@ class BasicModelsTestCase(TestCase):
         email = models.Email.objects.create(**self.test_email_data)
         create_test_recipient(email)
 
-        self.assertEqual(email.recipient_set.first().email_address, 'test@test.com')
+        self.assertEqual(email.recipients.first().email_address, 'test@test.com')
 
     def test_email_can_have_multiple_recipients(self):
         email = models.Email.objects.create(
@@ -39,4 +50,4 @@ class BasicModelsTestCase(TestCase):
         create_test_recipient(email)
         create_test_recipient(email)
 
-        self.assertEqual(len(email.recipient_set.all()), 2)
+        self.assertEqual(len(email.recipients.all()), 2)
