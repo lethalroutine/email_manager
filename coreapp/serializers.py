@@ -54,3 +54,7 @@ class EmailRestApiSerializer(serializers.Serializer):
 
     def create(self):
         pass
+
+
+class EmailStatusSerializer(serializers.Serializer):
+    status = serializers.CharField(max_length=1)
