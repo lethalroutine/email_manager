@@ -1,4 +1,6 @@
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework.test import APIClient
 
 from coreapp import models
 from emailcoredomain.repository import DjangoRepository
@@ -20,6 +22,9 @@ TEST_DOMAIN_EMAIL_DATA = {
     'sender': 'sender@test.com',
     'id': 1,
 }
+
+TEST_URL_EMAIL_DETAIL = reverse('email-detail', args=(1,))
+TEST_URL_EMAILS = reverse('emails')
 
 
 def create_test_recipient(parent_email, email_address='test@test.com'):
@@ -98,3 +103,41 @@ class RepositoryBasicTestCase(TestCase):
         self.repo.mark_as_sent(email.id)
         email.refresh_from_db()
         self.assertEqual(email.status, 'S')
+
+
+class ApiClientTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.repo = DjangoRepository()
+
+    def test_can_get_particular_email(self):
+        self.repo.save_email(Email(**TEST_DOMAIN_EMAIL_DATA))
+
+        response = self.client.get(TEST_URL_EMAIL_DETAIL)
+
+        self.assertEqual(response.data.get('sender'), TEST_DOMAIN_EMAIL_DATA.get('sender'))
+
+    def test_can_get_multiple_emails(self):
+        self.repo.save_email(Email(**TEST_DOMAIN_EMAIL_DATA))
+        self.repo.save_email(Email(**TEST_DOMAIN_EMAIL_DATA))
+
+        response = self.client.get(TEST_URL_EMAILS)
+
+        self.assertEqual(len(response.data), 2)
+
+    def test_can_send_email_successfully(self):
+        self.repo.save_email(Email(**TEST_DOMAIN_EMAIL_DATA))
+        self.client.put(TEST_URL_EMAIL_DETAIL, {'status': 'S'})
+        email = self.repo.get_email(1)
+
+        self.assertEqual(email.status, 'S')
+
+    def test_id_is_in_response_when_creating_email(self):
+        response = self.client.post(TEST_URL_EMAILS, TEST_DOMAIN_EMAIL_DATA)
+        self.assertIn('id', response.data)
+
+    def test_can_prepare_email_with_pending_status(self):
+        response = self.client.post(TEST_URL_EMAILS, TEST_DOMAIN_EMAIL_DATA)
+        email = self.repo.get_email(response.data.get('id'))
+
+        self.assertEqual(email.sender, TEST_DOMAIN_EMAIL_DATA.get('sender'))

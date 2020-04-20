@@ -16,8 +16,11 @@ class EmailRestApiView(APIView):
     def post(self, request, format=None):
         serializer = EmailRestApiSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            email_id = serializer.save()
+            response_data = dict(serializer.data)
+            response_data['id'] = email_id
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

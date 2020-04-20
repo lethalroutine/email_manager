@@ -33,6 +33,8 @@ class Email(models.Model):
                 parent_email=model_email
             )
 
+        return model_email.id
+
     @staticmethod
     def to_core_domain(email_model):
         email_domain = DomainEmail(

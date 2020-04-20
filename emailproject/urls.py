@@ -19,7 +19,6 @@ from django.urls import path
 from coreapp.views import EmailRestApiView, EmailDetailView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('emails/', EmailRestApiView.as_view(), name='emails'),
     path('emails/<int:pk>/', EmailDetailView.as_view(), name='email-detail'),
 ]

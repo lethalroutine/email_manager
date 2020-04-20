@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from coreapp import models
+from emailcoredomain.apps import Email
+from emailcoredomain.repository import DjangoRepository
 
 
 class EmailSerializer(serializers.ModelSerializer):
@@ -23,31 +25,25 @@ class EmailRestApiSerializer(serializers.Serializer):
     recipients = RecipientListSerializer()
     sender = serializers.CharField(max_length=50)
     subject = serializers.CharField(max_length=50)
-    body = serializers.CharField()
+    message_body = serializers.CharField()
     status = serializers.ChoiceField([('P', 'pending'), ('S', 'sent')])
 
     def save(self):
         email_data = self.get_email_data()
-        email = models.Email.objects.create(**email_data)
+        repo = DjangoRepository()
+        email_id = repo.save_email(Email(**email_data))
 
-        self.save_recipients(email)
-
-    def save_recipients(self, email):
-        for recipient in self.validated_data['recipients']:
-            models.Recipient.objects.create(
-                first_name='',
-                last_name='',
-                email_address=recipient,
-                parent_email=email
-            )
+        return email_id
 
     def get_email_data(self):
         email_fields = self.get_email_fields()
         email_data = {key: value for key, value in self.validated_data.items() if key in email_fields}
         return email_data
 
-    def get_email_fields(self):
-        return [name.name for name in models.Email._meta.get_fields()[2:]]
+    @staticmethod
+    def get_email_fields():
+        email_fields = Email.MANDATORY_FIELDS_LIST
+        return email_fields
 
     def update(self, instance, validated_data):
         pass

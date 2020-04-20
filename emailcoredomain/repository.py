@@ -23,7 +23,8 @@ class AbstractRepository(metaclass=ABCMeta):
 
 class DjangoRepository(AbstractRepository):
     def save_email(self, email):
-        models.Email.save_from_core_domain(email)
+        email_id = models.Email.save_from_core_domain(email)
+        return email_id
 
     def get_email(self, email_id):
         email_model = models.Email.objects.get(pk=email_id)
