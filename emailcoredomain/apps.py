@@ -11,6 +11,9 @@ class Email:
     def validate(self):
         return all(hasattr(self, field_name) for field_name in self.MANDATORY_FIELDS_LIST)
 
+    def __str__(self):
+        return f'Email values id: {self.id}, subject: {self.subject}, sender: {self.sender}'
+
 
 class IEmailDispatcher(metaclass=ABCMeta):
     @abstractmethod

@@ -1,20 +1,7 @@
 from rest_framework import serializers
 
-from coreapp import models
 from emailcoredomain.apps import Email
 from emailcoredomain.repository import DjangoRepository
-
-
-class EmailSerializer(serializers.ModelSerializer):
-    recipients = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='email_address'
-    )
-
-    class Meta:
-        fields = ['id', 'recipients', 'sender', 'subject', 'body', 'status']
-        model = models.Email
 
 
 class RecipientListSerializer(serializers.ListField):
@@ -31,7 +18,10 @@ class EmailRestApiSerializer(serializers.Serializer):
     def save(self):
         email_data = self.get_email_data()
         repo = DjangoRepository()
-        email_id = repo.save_email(Email(**email_data))
+        email = Email(**email_data)
+        if not email.validate():
+            return None
+        email_id = repo.save_email(email)
 
         return email_id
 

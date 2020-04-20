@@ -1,15 +1,18 @@
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from coreapp.models import Email
-from coreapp.serializers import EmailSerializer, EmailRestApiSerializer, EmailStatusSerializer
+from coreapp.serializers import EmailRestApiSerializer, EmailStatusSerializer
+from emailcoredomain.repository import DjangoRepository
+from emailcoredomain.apps import FakeEmailService, EmailDispatcher
 
 
 class EmailRestApiView(APIView):
+
     def get(self, request, format=None):
-        emails = Email.objects.all()
-        serializer = EmailSerializer(emails, many=True)
+        repo = DjangoRepository()
+        emails = repo.get_all_emails()
+        serializer = EmailRestApiSerializer(emails, many=True)
 
         return Response(serializer.data)
 
@@ -26,20 +29,25 @@ class EmailRestApiView(APIView):
 
 class EmailDetailView(APIView):
     def get(self, request, pk, format=None):
-        email = Email.objects.get(pk=pk)
-        serializer = EmailSerializer(email)
+        repo = DjangoRepository()
+        email = repo.get_email(pk)
+        serializer = EmailRestApiSerializer(email)
 
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
-        email = Email.objects.get(pk=pk)
+        repo = DjangoRepository()
         serializer = EmailStatusSerializer(data=request.data)
         if serializer.is_valid():
             is_set_to_send = serializer.data.get('status') == 'S'
             if is_set_to_send:
-                email.status = 'S'
-                email.save()
+                email = repo.get_email(pk)
+                email_service = FakeEmailService()
+                email_dispatcher = EmailDispatcher(email_service=email_service)
+                email_dispatcher.send_email(email)
 
-                return Response(EmailSerializer(email).data)
+                repo.mark_as_sent(pk)
+
+                return Response({'message': f'email with id: {pk} successfully sent'})
 
         return Response({'error': 'set status to "S" to send email'}, status=status.HTTP_400_BAD_REQUEST)
